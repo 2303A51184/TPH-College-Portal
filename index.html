@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TPH College Portal</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Poppins', sans-serif; background: #f4f6fa; color: #2c3e50; }
+
+    header {
+      background: #1b263b;
+      color: #f1c40f;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #2e3a59;
+      gap: 10px;
+    }
+
+    nav a, nav button {
+      color: #f1c40f;
+      padding: 15px 25px;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.3s;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    nav a:hover, nav button:hover {
+      background: #f1c40f;
+      color: #1b263b;
+      border-radius: 6px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 40px auto;
+      padding: 25px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      color: #1b263b;
+      border-left: 5px solid #f1c40f;
+      padding-left: 10px;
+      margin-bottom: 10px;
+    }
+
+    input, select, button {
+      width: 85%;
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background: #1b263b;
+      color: #f1c40f;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #f1c40f;
+      color: #1b263b;
+    }
+
+    .footer {
+      text-align: center;
+      background: #1b263b;
+      color: #f1c40f;
+      padding: 12px;
+      margin-top: 40px;
+      font-size: 14px;
+    }
+
+    .tab-buttons {
+      display: flex;
+      justify-content: space-around;
+      margin: 20px 0;
+    }
+
+    .tab-buttons button {
+      width: 30%;
+      padding: 10px;
+      border-radius: 6px;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+
+    th {
+      background: #f1c40f;
+      color: #1b263b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TPH College Portal</h1>
+    <p>Centralized Academic Dashboard</p>
+  </header>
+
+  <nav>
+    <a href="#" onclick="showSection('home')">Home</a>
+    <a href="#" onclick="showSection('login')">Login</a>
+    <a href="#" onclick="showSection('dashboard')">Dashboard</a>
+    <button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+  </nav>
+
+  <div class="container">
+    <!-- Home Section -->
+    <div id="home" class="section">
+      <h2>Welcome to TPH College Portal</h2>
+      <p>This platform provides personalized academic details based on Student ID. Faculty and Admin can log in for management access.</p>
+    </div>
+
+    <!-- Login Section -->
+    <div id="login" class="section" style="display:none;">
+      <h2>Login Portal</h2>
+      <select id="role">
+        <option value="">Select Role</option>
+        <option value="student">Student</option>
+        <option value="faculty">Faculty</option>
+        <option value="admin">Admin (Teju)</option>
+      </select><br>
+      <input type="text" id="username" placeholder="Enter Student ID or Email" />
+      <input type="password" id="password" placeholder="Enter Password" />
+      <button onclick="login()">Login</button>
+      <p id="loginMsg" style="color: crimson;"></p>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="section" style="display:none;">
+      <h2>Welcome, <span id="userNameDisplay"></span></h2>
+      <div class="tab-buttons">
+        <button onclick="showTab('profileTab')">Profile</button>
+        <button onclick="showTab('attendanceTab')">Attendance</button>
+        <button onclick="showTab('marksTab')">Marks</button>
+      </div>
+
+      <div id="profileTab" class="tab-content active">
+        <h3>👤 Profile</h3>
+        <div id="profileDetails"></div>
+      </div>
+
+      <div id="attendanceTab" class="tab-content">
+        <h3>📅 Attendance Record</h3>
+        <div id="attendanceDetails"></div>
+      </div>
+
+      <div id="marksTab" class="tab-content">
+        <h3>📊 Marks Summary</h3>
+        <div id="marksDetails"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>&copy; 2025 TPH College | Developed by Students</p>
+  </div>
+
+  <script>
+    // Demo Database
+    const studentDatabase = {
+      "2303A51831": {
+        name: "Sai Varshith",
+        branch: "CSE",
+        email: "2303a51831@tph.edu.in",
+        attendance: [["Web Technologies", 40, 45], ["Software Engineering", 42, 45], ["AI & ML", 38, 45]],
+        marks: [["Web Technologies", 25, 15], ["Software Engineering", 28, 17], ["AI & ML", 22, 18]]
+      },
+      "2303A51754": {
+        name: "Manasa",
+        branch: "CSE",
+        email: "2303a51754@tph.edu.in",
+        attendance: [["Web Technologies", 44, 45], ["Software Engineering", 45, 45], ["AI & ML", 43, 45]],
+        marks: [["Web Technologies", 28, 17], ["Software Engineering", 30, 19], ["AI & ML", 27, 18]]
+      }
+    };
+
+    const credentials = {
+      faculty: { user: "faculty@tph.edu.in", pass: "4321" },
+      admin: { user: "teju@tph.edu.in", pass: "0000" }
+    };
+
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+      document.getElementById(id).style.display = 'block';
+    }
+
+    function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const role = document.getElementById('role').value;
+      const msg = document.getElementById('loginMsg');
+      const logoutBtn = document.getElementById('logoutBtn');
+
+      if (!role) { msg.textContent = "Please select your role."; return; }
+
+      // STUDENT LOGIN (any ID or email works)
+      if (role === "student") {
+        if (password !== "1234") {
+          msg.textContent = "Incorrect password. Use: 1234";
+          return;
+        }
+
+        const id = username.toLowerCase();
+        const nameFromEmail = id.includes("@") ? id.split("@")[0] : id;
+        const displayName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1).toLowerCase();
+
+        const student = studentDatabase[username.toUpperCase()] || {
+          name: displayName,
+          branch: "CSE",
+          email: id.includes("@") ? id : `${id}@tph.edu.in`,
+          attendance: [["Web Technologies", 42, 45], ["Software Engineering", 43, 45], ["AI & ML", 39, 45]],
+          marks: [["Web Technologies", 26, 18], ["Software Engineering", 29, 16], ["AI & ML", 25, 17]]
+        };
+
+        document.getElementById('userNameDisplay').textContent = student.name;
+        loadStudentDashboard(student);
+        showSection('dashboard');
+        logoutBtn.style.display = "inline-block";
+        msg.textContent = "";
+        return;
+      }
+
+      // FACULTY LOGIN
+      if (role === "faculty" && username === credentials.faculty.user && password === credentials.faculty.pass) {
+        document.getElementById('userNameDisplay').textContent = "Faculty";
+        loadFacultyDashboard();
+        showSection('dashboard');
+        logoutBtn.style.display = "inline-block";
+        return;
+      }
+
+      // ADMIN LOGIN
+      if (role === "admin" && username === credentials.admin.user && password === credentials.admin.pass) {
+        document.getElementById('userNameDisplay').textContent = "Teju (Admin)";
+        loadAdminDashboard();
+        showSection('dashboard');
+        logoutBtn.style.display = "inline-block";
+        return;
+      }
+
+      msg.textContent = "Invalid credentials.";
+    }
+
+    function loadStudentDashboard(student) {
+      const profile = document.getElementById('profileDetails');
+      const attendance = document.getElementById('attendanceDetails');
+      const marks = document.getElementById('marksDetails');
+
+      profile.innerHTML = `
+        <p><strong>Name:</strong> ${student.name}</p>
+        <p><strong>ID:</strong> ${student.email.split('@')[0].toUpperCase()}</p>
+        <p><strong>Branch:</strong> ${student.branch}</p>
+        <p><strong>Email:</strong> ${student.email}</p>
+      `;
+
+      attendance.innerHTML = `
+        <table>
+          <tr><th>Subject</th><th>Attended</th><th>Total</th><th>%</th></tr>
+          ${student.attendance.map(a => `<tr><td>${a[0]}</td><td>${a[1]}</td><td>${a[2]}</td><td>${((a[1]/a[2])*100).toFixed(1)}%</td></tr>`).join('')}
+        </table>
+      `;
+
+      marks.innerHTML = `
+        <table>
+          <tr><th>Subject</th><th>Mid</th><th>Assignment</th><th>Total</th></tr>
+          ${student.marks.map(m => `<tr><td>${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[1]+m[2]}/50</td></tr>`).join('')}
+        </table>
+      `;
+    }
+
+    function loadFacultyDashboard() {
+      document.getElementById('profileDetails').innerHTML = `<p>Faculty Dashboard – manage student data (demo only).</p>`;
+      document.getElementById('attendanceDetails').innerHTML = `<p>Faculty can view/edit attendance records.</p>`;
+      document.getElementById('marksDetails').innerHTML = `<p>Faculty can upload marks.</p>`;
+    }
+
+    function loadAdminDashboard() {
+      document.getElementById('profileDetails').innerHTML = `<p>Admin Dashboard – system controls.</p>`;
+      document.getElementById('attendanceDetails').innerHTML = `<p>Admin can view system reports.</p>`;
+      document.getElementById('marksDetails').innerHTML = `<p>Admin can manage users.</p>`;
+    }
+
+    function showTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+    }
+
+    function logout() {
+      document.getElementById('logoutBtn').style.display = "none";
+      showSection('home');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('role').value = '';
+    }
+
+    showSection('home');
+  </script>
+</body>
+</html>
