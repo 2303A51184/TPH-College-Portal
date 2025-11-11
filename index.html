@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TPH College Portal</title>
+  <title>TPH College Portal (Offline Version)</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Poppins', sans-serif; background: #f4f6fa; color: #2c3e50; }
@@ -73,7 +73,17 @@
     }
     
     input[type="number"] {
-        width: 70px; /* Smaller for marks entry */
+        width: 70px;
+    }
+    
+    #adminFacultyTab input, #adminFacultyTab select {
+        width: 48%;
+        display: inline-block;
+        margin: 4px 1%;
+    }
+    #adminFacultyTab button {
+        width: 98%;
+        margin: 4px 1%;
     }
 
     button {
@@ -138,11 +148,16 @@
       border-collapse: collapse;
       margin-top: 10px;
     }
+    
+    div#adminFacultyList {
+        overflow-x: auto;
+    }
 
     th, td {
       padding: 10px;
       border: 1px solid #ccc;
       text-align: center;
+      min-width: 100px;
     }
 
     th {
@@ -153,7 +168,7 @@
 </head>
 <body>
   <header>
-    <h1>TPH College Portal</h1>
+    <h1>TPH College Portal (Offline Version)</h1>
     <p>Centralized Academic Dashboard</p>
   </header>
 
@@ -170,6 +185,7 @@
       <h2>Welcome to TPH College Portal</h2>
       <p>New students can register via the 'Student Register' link. Your Student ID will be generated for you.</p>
       <p>Faculty accounts are created by the Admin.</p>
+      <p style="color: blue; margin-top: 15px;"><strong>Note:</strong> All data is saved in your browser's LocalStorage.</p>
     </div>
 
     <div id="login" class="section" style="display:none;">
@@ -232,52 +248,58 @@
     <p>&copy; 2025 TPH College | Developed by Students</p>
   </div>
 
-  <script>
-    // --- THIS IS YOUR TEMPORARY DATABASE ---
-    // All data here is LOST when you refresh the page.
-  
-    // Demo Database for Students
-    const studentDatabase = {
-      "2303A51831": {
-        name: "Sai Varshith",
-        branch: "CSE",
-        email: "sai@gmail.com",
-        attendance: [["Web Technologies", 40, 45], ["Software Engineering", 42, 45], ["AI & ML", 38, 45]],
-        marks: [["Web Technologies", 25, 15], ["Software Engineering", 28, 17], ["AI & ML", 22, 18]]
-      },
-      "2303A51754": {
-        name: "Manasa",
-        branch: "CSE",
-        email: "manasa@gmail.com",
-        attendance: [["Web Technologies", 44, 45], ["Software Engineering", 45, 45], ["AI & ML", 43, 45]],
-        marks: [["Web Technologies", 28, 17], ["Software Engineering", 30, 19], ["AI & ML", 27, 18]]
-      }
-    };
+<script>
+    // --- THIS IS YOUR "ALL-IN-ONE" DATABASE ---
+    // We will load data from LocalStorage into these variables when the page opens.
     
-    // Student email to ID mapping (for login)
-    const studentEmailMap = {
-        "sai@gmail.com": "2303A51831",
-        "manasa@gmail.com": "2303A51754"
-    };
-    
-    // NEW: Counters for auto-generating student IDs
-    const idCounters = { CSE: 1, ECE: 1, MECH: 1, CIVIL: 1 };
+    let studentDatabase = {};
+    let studentEmailMap = {};
+    let idCounters = {};
+    let credentials = {}; // This will hold faculty and admin
 
-    const credentials = {
-      faculty: {
-        "faculty@tph.edu.in": { 
-          pass: "4321", 
-          name: "Dr. Faculty", 
-          dept: "CSE" 
-        }
-      },
-      admin: { 
-        user: "teju@tph.edu.in", 
-        pass: "0000" 
-      }
-    };
+    // --- NEW: Database Functions ---
     
-    // --- END OF TEMPORARY DATABASE ---
+    // Saves the student database to the browser's memory
+    function saveStudentDatabase() {
+        localStorage.setItem('tph_studentDB', JSON.stringify(studentDatabase));
+        localStorage.setItem('tph_studentEmailMap', JSON.stringify(studentEmailMap));
+        localStorage.setItem('tph_idCounters', JSON.stringify(idCounters));
+        console.log("Student DB Saved!");
+    }
+    
+    // Saves the faculty/admin database to the browser's memory
+    function saveCredentialsDatabase() {
+        localStorage.setItem('tph_credentials', JSON.stringify(credentials));
+        console.log("Credentials DB Saved!");
+    }
+
+    // Loads ALL data when the page first opens
+    function loadDatabase() {
+        // --- Load Students ---
+        studentDatabase = JSON.parse(localStorage.getItem('tph_studentDB')) || {};
+        studentEmailMap = JSON.parse(localStorage.getItem('tph_studentEmailMap')) || {};
+        idCounters = JSON.parse(localStorage.getItem('tph_idCounters')) || { CSE: 1, ECE: 1, MECH: 1, CIVIL: 1 };
+        
+        // --- Load Credentials (Faculty/Admin) ---
+        // If no credentials exist, create the default admin
+        credentials = JSON.parse(localStorage.getItem('tph_credentials')) || {
+          faculty: {
+            "faculty@tph.edu.in": { 
+              pass: "4321", name: "Dr. Faculty", dept: "CSE",
+              phone: "555-1234", office: "A-101", subjects: ["Web Technologies"]
+            }
+          },
+          admin: { 
+            user: "teju@tph.edu.in", 
+            pass: "0000" 
+          }
+        };
+        
+        console.log("Database Loaded from LocalStorage.");
+    }
+    
+    // --- END OF DATABASE FUNCTIONS ---
+
 
     function showSection(id) {
       document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
@@ -304,13 +326,13 @@
             return;
         }
         
-        // --- NEW: Auto-generate Student ID ---
+        // Auto-generate Student ID
         let nextIdNum = idCounters[branch];
         let paddedId = nextIdNum.toString().padStart(3, '0');
-        const newId = 25-${branch}-${paddedId}; // Example: 25-CSE-001
-        idCounters[branch]++; // Increment counter for next student in this branch
-        // --- End of new ID generation ---
+        const newId = `25-${branch}-${paddedId}`;
+        idCounters[branch]++; // Increment counter
         
+        // Add to our local database variable
         studentDatabase[newId] = {
             name: name,
             branch: branch,
@@ -321,8 +343,11 @@
         
         studentEmailMap[email] = newId;
         
+        // --- NEW: Save the updated database to LocalStorage ---
+        saveStudentDatabase();
+        
         msg.className = 'msg-success';
-        msg.textContent = Admission successful! Your new Student ID is: ${newId}. You can now login with your email.;
+        msg.textContent = `Admission successful! Your new Student ID is: ${newId}. You can now login with your email.`;
         
         document.getElementById('regName').value = '';
         document.getElementById('regEmail').value = '';
@@ -339,7 +364,7 @@
       document.getElementById('userDashboard').style.display = 'none';
       document.getElementById('adminDashboard').style.display = 'none';
 
-      // STUDENT LOGIN
+      // STUDENT LOGIN (from local variable)
       if (role === "student") {
         if (password !== "student@123") {
           msg.textContent = "Incorrect password. Use: student@123";
@@ -352,7 +377,7 @@
         if (student) {
           document.getElementById('userNameDisplay').textContent = student.name;
           document.getElementById('userDashboard').style.display = 'block';
-          loadStudentDashboard(student);
+          loadStudentDashboard(student, studentId); // Pass ID
           showSection('dashboard');
           logoutBtn.style.display = "inline-block";
           return;
@@ -362,7 +387,7 @@
         }
       }
 
-      // FACULTY LOGIN
+      // FACULTY LOGIN (from local variable)
       if (role === "faculty") {
         const facultyUser = credentials.faculty[username];
         
@@ -376,7 +401,7 @@
         }
       }
 
-      // ADMIN LOGIN
+      // ADMIN LOGIN (from local variable)
       if (role === "admin" && username === credentials.admin.user && password === credentials.admin.pass) {
         document.getElementById('userNameDisplay').textContent = "Teju (Admin)";
         document.getElementById('adminDashboard').style.display = 'block';
@@ -389,11 +414,11 @@
       msg.textContent = "Invalid credentials.";
     }
 
-    function loadStudentDashboard(student) {
+    function loadStudentDashboard(student, studentId) {
       document.getElementById('profileTab').innerHTML = `
         <h3>👤 Profile</h3>
         <p><strong>Name:</strong> ${student.name}</p>
-        <p><strong>ID:</strong> ${studentEmailMap[student.email]}</p>
+        <p><strong>ID:</strong> ${studentId}</p>
         <p><strong>Branch:</strong> ${student.branch}</p>
         <p><strong>Email:</strong> ${student.email}</p>
       `;
@@ -401,14 +426,14 @@
         <h3>📅 Attendance Record</h3>
         <table>
           <tr><th>Subject</th><th>Attended</th><th>Total</th><th>%</th></tr>
-          ${student.attendance.map(a => <tr><td>${a[0]}</td><td>${a[1]}</td><td>${a[2]}</td><td>${a[2] > 0 ? ((a[1]/a[2])*100).toFixed(1) : 0}%</td></tr>).join('')}
+          ${student.attendance.map(a => `<tr><td>${a[0]}</td><td>${a[1]}</td><td>${a[2]}</td><td>${a[2] > 0 ? ((a[1]/a[2])*100).toFixed(1) : 0}%</td></tr>`).join('')}
         </table>
       `;
       document.getElementById('marksTab').innerHTML = `
         <h3>📊 Marks Summary</h3>
         <table>
           <tr><th>Subject</th><th>Mid</th><th>Assignment</th><th>Total</th></tr>
-          ${student.marks.map(m => <tr><td>${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[1]+m[2]}/50</td></tr>).join('')}
+          ${student.marks.map(m => `<tr><td>${m[0]}</td><td>${m[1]}</td><td>${m[2]}</td><td>${m[1]+m[2]}/50</td></tr>`).join('')}
         </table>
       `;
       showTab(document.getElementById('profileBtn'), 'profileTab');
@@ -419,6 +444,10 @@
         <h3>👤 Profile</h3>
         <p><strong>Name:</strong> ${facultyUser.name}</p>
         <p><strong>Department:</strong> ${facultyUser.dept}</p>
+        <p><strong>Email:</strong> ${Object.keys(credentials.faculty).find(key => credentials.faculty[key] === facultyUser)}</p>
+        <p><strong>Phone:</strong> ${facultyUser.phone || 'N/A'}</p>
+        <p><strong>Office:</strong> ${facultyUser.office || 'N/A'}</p>
+        <p><strong>Subjects:</strong> ${facultyUser.subjects ? facultyUser.subjects.join(', ') : 'N/A'}</p>
       `;
       document.getElementById('attendanceTab').innerHTML = `
         <h3>📅 Update Student Attendance</h3>
@@ -426,7 +455,6 @@
         <button onclick="findStudentForAttendance()" style="width: 25%;">Find Student</button>
         <div id="facultyAttendanceUpdate"></div>
       `;
-      // --- NEW: Marks Entry Form ---
       document.getElementById('marksTab').innerHTML = `
         <h3>📊 Update Student Marks</h3>
         <input type="text" id="facultyStudentId_marks" placeholder="Enter Student ID" style="width: 70%;">
@@ -436,14 +464,13 @@
       showTab(document.getElementById('profileBtn'), 'profileTab');
     }
     
-    // --- Attendance Functions ---
     function findStudentForAttendance() {
         const studentId = document.getElementById('facultyStudentId_att').value.toUpperCase();
-        const student = studentDatabase[studentId];
+        const student = studentDatabase[studentId]; // Get from our local variable
         const container = document.getElementById('facultyAttendanceUpdate');
         
         if (!student) {
-            container.innerHTML = <p class="msg-error">Student not found.</p>;
+            container.innerHTML = `<p class="msg-error">Student not found.</p>`;
             return;
         }
         
@@ -469,18 +496,21 @@
         if (student) {
             student.attendance[subjectIndex][0]++; // attended
             student.attendance[subjectIndex][1]++; // total
+            
+            // --- NEW: Save the change ---
+            saveStudentDatabase();
+            
             findStudentForAttendance(); // Refresh the faculty view
         }
     }
     
-    // --- NEW: Marks Functions ---
     function findStudentForMarks() {
         const studentId = document.getElementById('facultyStudentId_marks').value.toUpperCase();
-        const student = studentDatabase[studentId];
+        const student = studentDatabase[studentId]; // Get from local variable
         const container = document.getElementById('facultyMarksUpdate');
         
         if (!student) {
-            container.innerHTML = <p class="msg-error">Student not found.</p>;
+            container.innerHTML = `<p class="msg-error">Student not found.</p>`;
             return;
         }
         
@@ -495,7 +525,7 @@
                   <td><input type="number" id="assign_${studentId}_${index}" value="${m[2]}" max="20"></td>
                 </tr>`).join('')}
             </table>
-            <button onclick="updateStudentMarks('${studentId}')">Save All Marks</button>
+            <button onclick="updateStudentMarks('${studentId}')" style="width: 98%;">Save All Marks</button>
             <p id="marksUpdateMsg" class="msg-success"></p>
         `;
         container.innerHTML = tableHtml;
@@ -505,30 +535,36 @@
         const student = studentDatabase[studentId];
         if (student) {
             student.marks.forEach((m, index) => {
-                const midVal = document.getElementById(mid_${studentId}_${index}).value;
-                const assignVal = document.getElementById(assign_${studentId}_${index}).value;
-                
-                student.marks[index][1] = parseInt(midVal) || 0; // Mid
-                student.marks[index][2] = parseInt(assignVal) || 0; // Assignment
+                const midVal = document.getElementById(`mid_${studentId}_${index}`).value;
+                const assignVal = document.getElementById(`assign_${studentId}_${index}`).value;
+                student.marks[index][1] = parseInt(midVal) || 0;
+                student.marks[index][2] = parseInt(assignVal) || 0;
             });
+            
+            // --- NEW: Save the change ---
+            saveStudentDatabase();
             
             document.getElementById('marksUpdateMsg').textContent = "Marks updated successfully!";
         }
     }
 
-    // --- Admin Functions ---
+    // --- Admin Functions (Updated) ---
     function loadAdminDashboard() {
-      document.getElementById('adminProfileTab').innerHTML = <h3>👤 Admin Profile</h3><p>Welcome, Teju!</p>;
+      document.getElementById('adminProfileTab').innerHTML = `<h3>👤 Admin Profile</h3><p>Welcome, Teju!</p>`;
       
       document.getElementById('adminFacultyTab').innerHTML = `
         <h3>Add New Faculty</h3>
         <input type="text" id="adminFacultyName" placeholder="Enter Full Name" />
         <input type="email" id="adminFacultyEmail" placeholder="Enter Faculty Email" />
-        <input type="password" id="adminFacultyPass" placeholder="Enter Temporary Password" />
+        <input type="password" id="adminFacultyPass" placeholder="Temporary Password" />
         <select id="adminFacultyDept">
             <option value="CSE">CSE</option><option value="ECE">ECE</option>
             <option value="MECH">MECH</option><option value="CIVIL">CIVIL</option>
         </select>
+        <input type="text" id="adminFacultyPhone" placeholder="Phone Number" />
+        <input type="text" id="adminFacultyOffice" placeholder="Office (e.g., B-204)" />
+        <input type="text" id="adminFacultySubjects" placeholder="Subjects (comma-separated)" />
+        
         <button onclick="adminAddFaculty()">Add Faculty</button>
         <p id="adminFacultyMsg" class="msg-error"></p>
         
@@ -536,7 +572,7 @@
         <div id="adminFacultyList"></div>
       `;
       
-      document.getElementById('adminReportsTab').innerHTML = <h3>📊 System Reports</h3><p>System-wide reports will be shown here.</p>;
+      document.getElementById('adminReportsTab').innerHTML = `<h3>📊 System Reports</h3><p>System-wide reports will be shown here.</p>`;
       
       loadFacultyList();
       showTab(document.getElementById('adminProfileBtn'), 'adminProfileTab');
@@ -547,11 +583,14 @@
         const email = document.getElementById('adminFacultyEmail').value.toLowerCase();
         const pass = document.getElementById('adminFacultyPass').value;
         const dept = document.getElementById('adminFacultyDept').value;
+        const phone = document.getElementById('adminFacultyPhone').value;
+        const office = document.getElementById('adminFacultyOffice').value;
+        const subjects = document.getElementById('adminFacultySubjects').value.split(',').map(s => s.trim());
         const msg = document.getElementById('adminFacultyMsg');
         
         if (!name || !email || !pass) {
             msg.className = 'msg-error';
-            msg.textContent = "Please fill all fields.";
+            msg.textContent = "Please fill Name, Email, and Password.";
             return;
         }
         
@@ -561,28 +600,61 @@
             return;
         }
         
-        credentials.faculty[email] = { pass: pass, name: name, dept: dept };
+        // Add to our local variable
+        credentials.faculty[email] = {
+            pass: pass,
+            name: name,
+            dept: dept,
+            phone: phone,
+            office: office,
+            subjects: subjects
+        };
+        
+        // --- NEW: Save the credentials database ---
+        saveCredentialsDatabase();
         
         msg.className = 'msg-success';
-        msg.textContent = Successfully added ${name}.;
+        msg.textContent = `Successfully added ${name}.`;
         
+        // Clear all fields
         document.getElementById('adminFacultyName').value = '';
         document.getElementById('adminFacultyEmail').value = '';
         document.getElementById('adminFacultyPass').value = '';
+        document.getElementById('adminFacultyPhone').value = '';
+        document.getElementById('adminFacultyOffice').value = '';
+        document.getElementById('adminFacultySubjects').value = '';
         
         loadFacultyList();
     }
     
     function loadFacultyList() {
         const listContainer = document.getElementById('adminFacultyList');
-        let html = '<table><tr><th>Name</th><th>Email</th><th>Department</th></tr>';
+        let html = `
+          <div style="overflow-x:auto;">
+          <table>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Department</th>
+              <th>Phone</th>
+              <th>Office</th>
+              <th>Subjects</th>
+            </tr>`;
         
         for (const email in credentials.faculty) {
             const user = credentials.faculty[email];
-            html += <tr><td>${user.name}</td><td>${email}</td><td>${user.dept}</td></tr>;
+            html += `
+              <tr>
+                <td>${user.name}</td>
+                <td>${email}</td>
+                <td>${user.dept}</td>
+                <td>${user.phone || 'N/A'}</td>
+                <td>${user.office || 'N/A'}</td>
+                <td>${user.subjects ? user.subjects.join(', ') : 'N/A'}</td>
+              </tr>`;
         }
         
-        html += '</table>';
+        html += '</table></div>';
         listContainer.innerHTML = html;
     }
 
@@ -592,11 +664,11 @@
       
       document.getElementById(tabId).parentNode.querySelectorAll('.tab-content').forEach(tab => {
           tab.classList.remove('active');
-          tab.style.display = 'none'; // Ensure it's hidden
+          tab.style.display = 'none';
       });
       
       document.getElementById(tabId).classList.add('active');
-      document.getElementById(tabId).style.display = 'block'; // Ensure it's shown
+      document.getElementById(tabId).style.display = 'block';
     }
 
     function logout() {
@@ -607,8 +679,14 @@
       document.getElementById('role').value = '';
     }
 
-    // Show home section on page load
+    // --- This is the most important part ---
+    // When the page loads, run these two functions
+    
+    // 1. Load all data from browser memory
+    loadDatabase();
+    // 2. Show the home section
     showSection('home');
+    
   </script>
 </body>
 </html>
